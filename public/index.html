@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LZ-77 CACHE NODE // MONITOR</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --panel: #161b22;
+            --border: #30363d;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+            --accent: #58a6ff;
+            --success: #238636;
+            --danger: #da3633;
+            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            height: 90vh;
+        }
+
+        .header {
+            grid-column: 1 / -1;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.2rem; margin: 0; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+        .badge { background: var(--border); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 0.9rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 5px;
+        }
+
+        /* Control Panel */
+        .control-group { display: flex; gap: 10px; }
+        input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            font-family: var(--font-mono);
+            border-radius: 4px;
+        }
+        input:focus { outline: 1px solid var(--accent); }
+
+        button {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-family: var(--font-mono);
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { background: var(--border); cursor: not-allowed; }
+
+        /* Status Bar */
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(88, 166, 255, 0.1);
+            border-left: 3px solid var(--accent);
+            color: var(--accent);
+        }
+        #status.hit { border-color: var(--success); color: var(--success); background: rgba(35, 134, 54, 0.1); }
+        #status.miss { border-color: var(--danger); color: var(--danger); background: rgba(218, 54, 51, 0.1); }
+
+        /* Memory Block Visualization */
+        .memory-grid { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .mem-block {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--text-dim);
+            transition: all 0.2s;
+        }
+        .mem-block:first-child { border-left-color: var(--success); } /* MRU */
+        .mem-block:last-child { border-left-color: var(--danger); opacity: 0.7; } /* LRU */
+        
+        .mem-key { color: var(--accent); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .mem-val { color: var(--text-dim); font-size: 0.75rem; }
+
+        /* Metrics */
+        .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .metric-val { font-size: 1.5rem; font-weight: bold; color: var(--text-main); }
+        .metric-label { font-size: 0.8rem; color: var(--text-dim); }
+
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="header">
+        <h1>Server Node: LRU-PROXY-01</h1>
+        <div class="badge">STATUS: ONLINE</div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">Request Interface</div>
+        <div class="control-group">
+            <input type="text" id="urlInput" value="https://jsonplaceholder.typicode.com/todos/1">
+            <button onclick="fetchData()" id="fetchBtn">EXECUTE</button>
+        </div>
+        <div id="status">SYSTEM READY... WAITING FOR INPUT</div>
+
+        <div class="panel-title" style="margin-top: 30px;">Latency Telemetry (ms)</div>
+        <div style="flex: 1; min-height: 0;">
+            <canvas id="perfChart"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">Memory Heap State</div>
+        <div class="metric-row">
+            <div>
+                <div class="metric-label">CAPACITY</div>
+                <div class="metric-val"><span id="cacheCount">0</span>/<span id="cacheCap">0</span></div>
+            </div>
+            <div style="text-align: right;">
+                <div class="metric-label">EVICTION POLICY</div>
+                <div class="metric-val" style="font-size: 1rem; color: var(--accent);">LRU</div>
+            </div>
+        </div>
+        <div id="cacheList" class="memory-grid">
+            </div>
+    </div>
+</div>
+
+<script>
+    // Chart Configuration (Dark Theme)
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.borderColor = '#30363d';
+    const ctx = document.getElementById('perfChart').getContext('2d');
+    const perfChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Latency',
+                data: [],
+                borderColor: '#58a6ff',
+                backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { 
+                x: { display: false },
+                y: { beginAtZero: true, grid: { color: '#30363d' } } 
+            },
+            plugins: { legend: { display: false } },
+            animation: { duration: 0 }
+        }
+    });
+
+    async function updateDashboard() {
+        const res = await fetch('/cache-stats');
+        const data = await res.json();
+        
+        document.getElementById('cacheCount').innerText = data.size;
+        document.getElementById('cacheCap').innerText = data.capacity;
+        
+        const list = document.getElementById('cacheList');
+        list.innerHTML = ''; 
+        
+        // Reverse to show MRU (Most Recent) at top
+        [...data.cache].reverse().forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'mem-block';
+            const isMRU = index === 0;
+            const isLRU = index === data.cache.length - 1 && data.cache.length === data.capacity;
+            
+            let tag = '';
+            if(isMRU) tag = ' <span style="color:var(--success); float:right; font-size:0.7em">[MRU]</span>';
+            if(isLRU) tag = ' <span style="color:var(--danger); float:right; font-size:0.7em">[LRU - NEXT TO DIE]</span>';
+
+            div.innerHTML = `
+                <div class="mem-key">${item.key.replace('https://jsonplaceholder.typicode.com', '...')} ${tag}</div>
+                <div class="mem-val">Payload Size: ${JSON.stringify(item.value).length} bytes</div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    async function fetchData() {
+        const url = document.getElementById('urlInput').value;
+        const status = document.getElementById('status');
+        const btn = document.getElementById('fetchBtn');
+        
+        status.innerText = "> INITIALIZING REQUEST...";
+        status.className = "";
+        btn.disabled = true;
+
+        const startTime = Date.now();
+        
+        try {
+            const res = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
+            const data = await res.json();
+            const duration = Date.now() - startTime;
+            const cacheState = res.headers.get('X-Cache'); 
+
+            if (cacheState === 'HIT') {
+                status.innerHTML = `> [SUCCESS] CACHE HIT<br>> LATENCY: ${duration}ms`;
+                status.className = "hit";
+            } else {
+                status.innerHTML = `> [WARNING] CACHE MISS - FETCHING EXTERNAL<br>> LATENCY: ${duration}ms`;
+                status.className = "miss";
+            }
+
+            perfChart.data.labels.push('');
+            perfChart.data.datasets[0].data.push(duration);
+            if (perfChart.data.labels.length > 20) {
+                perfChart.data.labels.shift();
+                perfChart.data.datasets[0].data.shift();
+            }
+            perfChart.update();
+
+        } catch (err) {
+            status.innerText = "> [ERROR] CONNECTION FAILURE";
+            status.className = "miss";
+        }
+
+        btn.disabled = false;
+        updateDashboard();
+    }
+    updateDashboard();
+</script>
+</body>
+</html>
