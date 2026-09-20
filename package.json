@@ -1,18 +1,29 @@
 {
-  "name": "lru-cache-proxy",
-  "version": "1.0.0",
-  "description": "",
+  "name": "nexus-lru-cache-proxy",
+  "version": "2.0.0",
+  "description": "High-Performance RFC 7234 Reverse Caching Gateway with O(1) Doubly Linked List, Cache Stampede Mitigation, and Real-Time Telemetry",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node index.js",
+    "test": "node --test test/lru.test.js test/gateway.test.js",
+    "bench": "node scripts/benchmark.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "keywords": [
+    "lru-cache",
+    "lfu-cache",
+    "reverse-proxy",
+    "singleflight",
+    "cache-stampede",
+    "rfc-7234",
+    "telemetry",
+    "performance",
+    "doubly-linked-list"
+  ],
+  "author": "Sushant",
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.13.2",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "express": "^4.21.2"
   }
 }

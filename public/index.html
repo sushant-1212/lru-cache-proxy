@@ -1,274 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LZ-77 CACHE NODE // MONITOR</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --bg: #0d1117;
-            --panel: #161b22;
-            --border: #30363d;
-            --text-main: #c9d1d9;
-            --text-dim: #8b949e;
-            --accent: #58a6ff;
-            --success: #238636;
-            --danger: #da3633;
-            --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--text-main);
-            font-family: var(--font-mono);
-            margin: 0;
-            padding: 20px;
-            font-size: 14px;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            grid-template-rows: auto 1fr;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            height: 90vh;
-        }
-
-        .header {
-            grid-column: 1 / -1;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 { font-size: 1.2rem; margin: 0; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
-        .badge { background: var(--border); padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
-
-        .panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel-title {
-            font-size: 0.9rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 5px;
-        }
-
-        /* Control Panel */
-        .control-group { display: flex; gap: 10px; }
-        input {
-            flex: 1;
-            background: var(--bg);
-            border: 1px solid var(--border);
-            color: var(--text-main);
-            padding: 10px;
-            font-family: var(--font-mono);
-            border-radius: 4px;
-        }
-        input:focus { outline: 1px solid var(--accent); }
-
-        button {
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-family: var(--font-mono);
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        button:hover { opacity: 0.9; }
-        button:disabled { background: var(--border); cursor: not-allowed; }
-
-        /* Status Bar */
-        #status {
-            margin-top: 15px;
-            padding: 10px;
-            background: rgba(88, 166, 255, 0.1);
-            border-left: 3px solid var(--accent);
-            color: var(--accent);
-        }
-        #status.hit { border-color: var(--success); color: var(--success); background: rgba(35, 134, 54, 0.1); }
-        #status.miss { border-color: var(--danger); color: var(--danger); background: rgba(218, 54, 51, 0.1); }
-
-        /* Memory Block Visualization */
-        .memory-grid { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-        .mem-block {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            padding: 10px;
-            font-size: 0.85rem;
-            border-left: 3px solid var(--text-dim);
-            transition: all 0.2s;
-        }
-        .mem-block:first-child { border-left-color: var(--success); } /* MRU */
-        .mem-block:last-child { border-left-color: var(--danger); opacity: 0.7; } /* LRU */
-        
-        .mem-key { color: var(--accent); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-        .mem-val { color: var(--text-dim); font-size: 0.75rem; }
-
-        /* Metrics */
-        .metric-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .metric-val { font-size: 1.5rem; font-weight: bold; color: var(--text-main); }
-        .metric-label { font-size: 0.8rem; color: var(--text-dim); }
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusProxy // High-Performance Caching Gateway & Memory Telemetry</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-
-<div class="dashboard">
-    <div class="header">
-        <h1>Server Node: LRU-PROXY-01</h1>
-        <div class="badge">STATUS: ONLINE</div>
+  <!-- Header Bar -->
+  <header class="navbar">
+    <div class="brand">
+      <div class="pulse-dot"></div>
+      <span class="brand-title">NEXUS<span class="accent-cyan">PROXY</span></span>
+      <span class="badge">RFC 7234 GATEWAY</span>
     </div>
-
-    <div class="panel">
-        <div class="panel-title">Request Interface</div>
-        <div class="control-group">
-            <input type="text" id="urlInput" value="https://jsonplaceholder.typicode.com/todos/1">
-            <button onclick="fetchData()" id="fetchBtn">EXECUTE</button>
-        </div>
-        <div id="status">SYSTEM READY... WAITING FOR INPUT</div>
-
-        <div class="panel-title" style="margin-top: 30px;">Latency Telemetry (ms)</div>
-        <div style="flex: 1; min-height: 0;">
-            <canvas id="perfChart"></canvas>
-        </div>
+    <div class="controls-bar">
+      <div class="control-item">
+        <label for="policySelect">POLICY:</label>
+        <select id="policySelect" onchange="changePolicy()">
+          <option value="LRU" selected>LRU (Least Recently Used)</option>
+          <option value="LFU">LFU (Least Frequently Used)</option>
+        </select>
+      </div>
+      <div class="control-item">
+        <label for="capacitySelect">CAPACITY:</label>
+        <select id="capacitySelect" onchange="changeCapacity()">
+          <option value="3">3 Slots</option>
+          <option value="5" selected>5 Slots</option>
+          <option value="8">8 Slots</option>
+          <option value="12">12 Slots</option>
+        </select>
+      </div>
+      <button class="btn btn-outline" onclick="purgeCache()">Purge Cache</button>
+      <button class="btn btn-outline" onclick="resetMetrics()">Reset Stats</button>
     </div>
+  </header>
 
-    <div class="panel">
-        <div class="panel-title">Memory Heap State</div>
-        <div class="metric-row">
-            <div>
-                <div class="metric-label">CAPACITY</div>
-                <div class="metric-val"><span id="cacheCount">0</span>/<span id="cacheCap">0</span></div>
-            </div>
-            <div style="text-align: right;">
-                <div class="metric-label">EVICTION POLICY</div>
-                <div class="metric-val" style="font-size: 1rem; color: var(--accent);">LRU</div>
-            </div>
+  <!-- Main Grid -->
+  <main class="dashboard-grid">
+    <!-- Top Telemetry Row -->
+    <section class="telemetry-strip">
+      <div class="stat-card">
+        <div class="stat-label">CACHE HIT RATIO</div>
+        <div class="stat-value" id="hitRatioVal">0.0%</div>
+        <div class="stat-sub" id="hitCountSub">0 Hits / 0 Misses</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">AVG LATENCY</div>
+        <div class="stat-value text-cyan" id="avgLatencyVal">0 ms</div>
+        <div class="stat-sub" id="p99LatencySub">P99: 0 ms</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">STAMPEDE COALESCED</div>
+        <div class="stat-value text-green" id="coalescedVal">0</div>
+        <div class="stat-sub">Singleflight Protected</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">BANDWIDTH SAVED</div>
+        <div class="stat-value text-purple" id="bandwidthSavedVal">0 KB</div>
+        <div class="stat-sub" id="heapUsedSub">Cache: 0 KB</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">CURRENT QPS</div>
+        <div class="stat-value" id="qpsVal">0.0</div>
+        <div class="stat-sub" id="totalReqSub">Total: 0 Req</div>
+      </div>
+    </section>
+
+    <!-- Interactive Request Simulator -->
+    <section class="panel request-panel">
+      <div class="panel-header">
+        <span class="panel-title">REQUEST INTERFACE &amp; TRAFFIC GENERATOR</span>
+        <span class="badge" id="systemStateBadge">GATEWAY READY</span>
+      </div>
+
+      <div class="input-row">
+        <input type="text" id="targetUrlInput" value="/api/mock/products/1" placeholder="Enter endpoint or full URL">
+        <button class="btn btn-primary" id="btnExecute" onclick="sendRequest()">SEND REQUEST</button>
+        <button class="btn btn-burst" id="btnBurst" onclick="simulateCacheStampede()">
+          ⚡ BURST (50 CONCURRENT)
+        </button>
+      </div>
+
+      <div class="presets-row">
+        <span class="presets-label">Presets:</span>
+        <button class="chip" onclick="setTargetUrl('/api/mock/products/1')">Product #1 (TTL 20s)</button>
+        <button class="chip" onclick="setTargetUrl('/api/mock/products/2')">Product #2</button>
+        <button class="chip" onclick="setTargetUrl('/api/mock/products/3')">Product #3</button>
+        <button class="chip" onclick="setTargetUrl('/api/mock/products/4')">Product #4</button>
+        <button class="chip" onclick="setTargetUrl('/api/mock/heavy-query')">Heavy DB Query (200ms)</button>
+        <button class="chip" onclick="setTargetUrl('/api/mock/realtime-ticker')">No-Store Ticker</button>
+        <button class="chip" onclick="setTargetUrl('https://jsonplaceholder.typicode.com/todos/1')">External API</button>
+      </div>
+
+      <div id="statusAlert" class="status-box">Ready for traffic.</div>
+
+      <!-- Latency Real-Time Chart -->
+      <div class="chart-container">
+        <div class="chart-title-bar">
+          <span>LATENCY TELEMETRY (ms)</span>
+          <div class="legend-row">
+            <span class="legend-item"><span class="dot dot-green"></span> Cache Hit (&lt;2ms)</span>
+            <span class="legend-item"><span class="dot dot-red"></span> Cache Miss (Origin Fetch)</span>
+            <span class="legend-item"><span class="dot dot-purple"></span> Stale-While-Revalidate</span>
+          </div>
         </div>
-        <div id="cacheList" class="memory-grid">
-            </div>
-    </div>
-</div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="latencyChart"></canvas>
+        </div>
+      </div>
+    </section>
 
-<script>
-    // Chart Configuration (Dark Theme)
-    Chart.defaults.color = '#8b949e';
-    Chart.defaults.borderColor = '#30363d';
-    const ctx = document.getElementById('perfChart').getContext('2d');
-    const perfChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'Latency',
-                data: [],
-                borderColor: '#58a6ff',
-                backgroundColor: 'rgba(88, 166, 255, 0.1)',
-                borderWidth: 2,
-                tension: 0.4,
-                fill: true,
-                pointRadius: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { 
-                x: { display: false },
-                y: { beginAtZero: true, grid: { color: '#30363d' } } 
-            },
-            plugins: { legend: { display: false } },
-            animation: { duration: 0 }
-        }
-    });
+    <!-- Real-time Doubly-Linked List / Memory Visualizer -->
+    <section class="panel memory-panel">
+      <div class="panel-header">
+        <span class="panel-title">MEMORY HEAP &amp; DOUBLY LINKED LIST</span>
+        <span class="badge" id="policyBadge">POLICY: LRU</span>
+      </div>
 
-    async function updateDashboard() {
-        const res = await fetch('/cache-stats');
-        const data = await res.json();
-        
-        document.getElementById('cacheCount').innerText = data.size;
-        document.getElementById('cacheCap').innerText = data.capacity;
-        
-        const list = document.getElementById('cacheList');
-        list.innerHTML = ''; 
-        
-        // Reverse to show MRU (Most Recent) at top
-        [...data.cache].reverse().forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'mem-block';
-            const isMRU = index === 0;
-            const isLRU = index === data.cache.length - 1 && data.cache.length === data.capacity;
-            
-            let tag = '';
-            if(isMRU) tag = ' <span style="color:var(--success); float:right; font-size:0.7em">[MRU]</span>';
-            if(isLRU) tag = ' <span style="color:var(--danger); float:right; font-size:0.7em">[LRU - NEXT TO DIE]</span>';
+      <div class="dlist-meta">
+        <div class="meta-col">
+          <div class="meta-label">SLOTS OCCUPIED</div>
+          <div class="meta-val"><span id="occupiedSlots">0</span> / <span id="totalSlots">5</span></div>
+        </div>
+        <div class="meta-col">
+          <div class="meta-label">MEMORY FOOTPRINT</div>
+          <div class="meta-val" id="memoryFootprintVal">0 B</div>
+        </div>
+        <div class="meta-col">
+          <div class="meta-label">EVICTION ORDER</div>
+          <div class="meta-val text-cyan" id="evictionOrderDesc">MRU (Head) → LRU (Tail)</div>
+        </div>
+      </div>
 
-            div.innerHTML = `
-                <div class="mem-key">${item.key.replace('https://jsonplaceholder.typicode.com', '...')} ${tag}</div>
-                <div class="mem-val">Payload Size: ${JSON.stringify(item.value).length} bytes</div>
-            `;
-            list.appendChild(div);
-        });
-    }
+      <!-- Linked list representation -->
+      <div class="linked-list-container" id="linkedListContainer">
+        <!-- Sentinel Head -->
+        <div class="node-sentinel sentinel-head">
+          <div class="sentinel-label">HEAD</div>
+          <div class="sentinel-sub">MRU</div>
+        </div>
+        <div class="pointer-arrow">&harr;</div>
 
-    async function fetchData() {
-        const url = document.getElementById('urlInput').value;
-        const status = document.getElementById('status');
-        const btn = document.getElementById('fetchBtn');
-        
-        status.innerText = "> INITIALIZING REQUEST...";
-        status.className = "";
-        btn.disabled = true;
+        <!-- Dynamic Nodes inserted here -->
+        <div id="dynamicNodes" class="dynamic-nodes-wrapper"></div>
 
-        const startTime = Date.now();
-        
-        try {
-            const res = await fetch(`/proxy?url=${encodeURIComponent(url)}`);
-            const data = await res.json();
-            const duration = Date.now() - startTime;
-            const cacheState = res.headers.get('X-Cache'); 
+        <div class="pointer-arrow">&harr;</div>
+        <!-- Sentinel Tail -->
+        <div class="node-sentinel sentinel-tail">
+          <div class="sentinel-label">TAIL</div>
+          <div class="sentinel-sub">LRU (NEXT TO EVICT)</div>
+        </div>
+      </div>
 
-            if (cacheState === 'HIT') {
-                status.innerHTML = `> [SUCCESS] CACHE HIT<br>> LATENCY: ${duration}ms`;
-                status.className = "hit";
-            } else {
-                status.innerHTML = `> [WARNING] CACHE MISS - FETCHING EXTERNAL<br>> LATENCY: ${duration}ms`;
-                status.className = "miss";
-            }
+      <!-- Recent Eviction Log -->
+      <div class="eviction-log-wrapper">
+        <div class="eviction-log-title">REAL-TIME EVICTION AUDIT LOG</div>
+        <div class="eviction-log-list" id="evictionLogList">
+          <div class="log-empty">No evictions yet. When cache reaches capacity, dropped items appear here.</div>
+        </div>
+      </div>
+    </section>
 
-            perfChart.data.labels.push('');
-            perfChart.data.datasets[0].data.push(duration);
-            if (perfChart.data.labels.length > 20) {
-                perfChart.data.labels.shift();
-                perfChart.data.datasets[0].data.shift();
-            }
-            perfChart.update();
+    <!-- Response & RFC Headers Inspector -->
+    <section class="panel inspector-panel">
+      <div class="panel-header">
+        <span class="panel-title">RFC 7234 RESPONSE &amp; HEADER INSPECTOR</span>
+        <span class="badge" id="lastStatusCode">200 OK</span>
+      </div>
+      <div class="inspector-grid">
+        <div class="inspector-headers">
+          <div class="sub-title">RESPONSE HEADERS</div>
+          <pre id="responseHeadersBox" class="code-box">Waiting for request...</pre>
+        </div>
+        <div class="inspector-payload">
+          <div class="sub-title">BODY PAYLOAD</div>
+          <pre id="responsePayloadBox" class="code-box">{ "status": "idle" }</pre>
+        </div>
+      </div>
+    </section>
+  </main>
 
-        } catch (err) {
-            status.innerText = "> [ERROR] CONNECTION FAILURE";
-            status.className = "miss";
-        }
-
-        btn.disabled = false;
-        updateDashboard();
-    }
-    updateDashboard();
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
