@@ -114,7 +114,6 @@ Validated against local origin running real workloads with deterministic latency
 ├── Dockerfile                  # Production container definition
 ├── docker-compose.yml          # Container orchestration
 ├── package.json                # Project dependencies & scripts
-├── RESUME_BULLETS.md           # Recruiter-ready bullet points & interview prep
 └── README.md                   # System documentation
 ```
 

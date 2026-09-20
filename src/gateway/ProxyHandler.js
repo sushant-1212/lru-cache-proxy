@@ -15,10 +15,17 @@ class ProxyHandler {
 
   async handle(req, res) {
     const startTime = Date.now();
-    const targetUrl = req.query.url || this.defaultOriginUrl;
+    let targetUrl = req.query.url || this.defaultOriginUrl;
 
     if (!targetUrl) {
       return res.status(400).json({ error: 'Missing target URL parameter (?url=...)' });
+    }
+
+    // Resolve relative path to full URL using current request host for deployment readiness
+    if (targetUrl.startsWith('/')) {
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+      const host = req.headers['x-forwarded-host'] || req.get('host') || 'localhost:3000';
+      targetUrl = `${protocol}://${host}${targetUrl}`;
     }
 
     // 1. Check if client specifies cache bypass

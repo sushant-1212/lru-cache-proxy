@@ -26,7 +26,7 @@ const metricsTracker = new MetricsTracker();
 const proxyHandler = new ProxyHandler({
   cacheEngine,
   metricsTracker,
-  defaultOriginUrl: `http://localhost:${PORT}/api/mock/products/1`
+  defaultOriginUrl: '/api/mock/products/1'
 });
 
 // 1. Mount Realistic Mock Upstream Service
