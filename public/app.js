@@ -102,16 +102,16 @@ async function sendRequest() {
     // Update Status Box
     if (cacheState === 'HIT') {
       statusBox.className = 'status-box hit';
-      statusBox.innerHTML = `<strong>CACHE HIT:</strong> Served in <strong>${duration}ms</strong> from memory (Age: ${age}s, ETag: ${etag})`;
+      statusBox.innerHTML = `<strong>CACHE HIT:</strong> Cache Engine: <strong>${responseTimeHeader}ms</strong> | Network RTT: <strong>${duration}ms</strong> (Age: ${age}s, ETag: ${etag})`;
     } else if (cacheState === 'STALE') {
       statusBox.className = 'status-box stale';
-      statusBox.innerHTML = `<strong>STALE-WHILE-REVALIDATE:</strong> Stale data served in <strong>${duration}ms</strong>; background fetch initiated!`;
+      statusBox.innerHTML = `<strong>STALE-WHILE-REVALIDATE:</strong> Cache Engine: <strong>${responseTimeHeader}ms</strong> | Network RTT: <strong>${duration}ms</strong>; background fetch initiated!`;
     } else if (cacheState === 'BYPASS') {
       statusBox.className = 'status-box';
-      statusBox.innerHTML = `<strong>CACHE BYPASS:</strong> Fetched from origin in <strong>${duration}ms</strong> (No-Store)`;
+      statusBox.innerHTML = `<strong>CACHE BYPASS:</strong> Origin Fetch: <strong>${responseTimeHeader}ms</strong> | Network RTT: <strong>${duration}ms</strong> (No-Store)`;
     } else {
       statusBox.className = 'status-box miss';
-      statusBox.innerHTML = `<strong>CACHE MISS:</strong> Fetched from origin in <strong>${duration}ms</strong> (Stored in Cache)`;
+      statusBox.innerHTML = `<strong>CACHE MISS:</strong> Origin Fetch: <strong>${responseTimeHeader}ms</strong> | Network RTT: <strong>${duration}ms</strong> (Stored in Cache)`;
     }
 
     // Inspector
@@ -149,7 +149,14 @@ async function simulateCacheStampede() {
 
   btn.disabled = true;
   statusBox.className = 'status-box burst';
-  statusBox.innerText = `Firing 50 concurrent requests to test Singleflight Request Coalescing...`;
+  statusBox.innerText = `Purging key to simulate cold cache stampede & firing 50 concurrent requests...`;
+
+  // Purge the specific key first so all 50 requests hit simultaneously as a cold cache miss
+  try {
+    await fetch(`/api/cache/key?url=${encodeURIComponent(targetUrl)}`, { method: 'DELETE' });
+  } catch (e) {
+    // ignore
+  }
 
   const startTime = performance.now();
   const count = 50;

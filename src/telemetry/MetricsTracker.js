@@ -30,8 +30,9 @@ class MetricsTracker {
     else if (status === 'STALE') this.staleHits++;
     else if (status === 'BYPASS') this.bypasses++;
 
+    const numBytes = Number(bytes) || 0;
     if (status === 'HIT' || status === 'STALE') {
-      this.bytesSaved += bytes;
+      this.bytesSaved += numBytes;
     }
 
     if (wasCoalesced) {

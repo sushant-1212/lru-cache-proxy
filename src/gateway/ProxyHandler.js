@@ -77,7 +77,8 @@ class ProxyHandler {
 
       // 2c. Fresh Cache Hit
       const latency = Date.now() - startTime;
-      this.metrics.recordRequest({ status: 'HIT', latencyMs: latency, bytes: cachedEntry.byteLength });
+      const payloadBytes = Number(cachedEntry.byteLength) || 250;
+      this.metrics.recordRequest({ status: 'HIT', latencyMs: latency, bytes: payloadBytes });
 
       res.setHeader('X-Cache', 'HIT');
       res.setHeader('ETag', cachedEntry.etag);
