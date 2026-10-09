@@ -9,6 +9,16 @@
 
 ---
 
+## 🖥️ Live Telemetry Dashboard & Observability (Deployed on AWS EC2)
+
+<p align="center">
+  <img src="assets/dashboard-telemetry.jpg" alt="NexusProxy Live Telemetry Dashboard" width="100%" />
+</p>
+
+> **Real-Time Telemetry & Burst Engine**: Sustaining **99.8% cache hit ratios**, sub-millisecond warm-hit latencies (**0ms avg**), active bandwidth savings, and Singleflight stampede coalescing on AWS EC2.
+
+---
+
 ## 🏗 System Architecture
 
 ```mermaid
@@ -56,6 +66,13 @@ Validated against local origin running real workloads with deterministic latency
 * **Without Singleflight**: 100 separate database / origin queries dispatched at the same instant (potential cascade failure).
 * **With NexusProxy Singleflight**: **1** single origin fetch dispatched; **99 requests coalesced** into the identical promise. All 100 clients served in **330ms** total with zero duplicate upstream queries.
 
+<p align="center">
+  <img src="assets/benchmark-table.jpg" alt="Automated Benchmark Table Suite" width="90%" />
+</p>
+<p align="center">
+  <img src="assets/autocannon-stream.jpg" alt="60-Second Autocannon High-Concurrency Stream" width="90%" />
+</p>
+
 ---
 
 ## 🚀 Key Engineering Features
@@ -80,6 +97,10 @@ Validated against local origin running real workloads with deterministic latency
 * **1-Click Burst Simulator**: Trigger a 50-request concurrent burst directly from the UI to watch Singleflight request coalescing in action.
 * **Live Telemetry Strip**: Real-time QPS, P50/P99 latency graph, hit ratio percentage, and upstream bandwidth saved.
 * **Header & Payload Inspector**: Review incoming and upstream HTTP headers and cache metadata.
+
+<p align="center">
+  <img src="assets/memory-inspector.jpg" alt="Doubly-Linked List Memory Visualizer" width="90%" />
+</p>
 
 ---
 
