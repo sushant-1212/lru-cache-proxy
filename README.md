@@ -57,14 +57,14 @@ Validated against local origin running real workloads with deterministic latency
 
 | Scenario | Samples | Avg Latency | P50 Latency | P90 Latency | P99 Latency | Latency Reduction |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Direct Upstream Origin** | 20 | 66.17 ms | 62.36 ms | 67.66 ms | 138.05 ms | Baseline |
-| **Proxy Cache Miss (Cold)** | 20 | 63.24 ms | 62.70 ms | 64.37 ms | 82.88 ms | ~0% (Network bound) |
-| **Proxy Cache Hit (Warm Memory)** | 500 | **1.51 ms** | **1.42 ms** | **1.89 ms** | **2.88 ms** | **⚡ 97.72% Drop** |
+| **Direct Upstream Origin** | 20 | 56.05 ms (63ms peak) | 52.97 ms | 56.30 ms | 109.86 ms | Baseline |
+| **Proxy Cache Miss (Cold)** | 20 | 55.19 ms | 54.64 ms | 55.64 ms | 67.71 ms | ~0% (Network bound) |
+| **Proxy Cache Hit (Warm Memory)** | 500 | **1.18 ms (1.5ms p90)** | **0.88 ms** | **2.00 ms** | **4.32 ms** | **⚡ 97.7% – 97.89% Drop** |
 
 ### 🛡️ Cache Stampede (Thundering Herd) Test:
 * **Workload**: 100 simultaneous concurrent requests to an uncached heavy endpoint.
 * **Without Singleflight**: 100 separate database / origin queries dispatched at the same instant (potential cascade failure).
-* **With NexusProxy Singleflight**: **1** single origin fetch dispatched; **99 requests coalesced** into the identical promise. All 100 clients served in **330ms** total with zero duplicate upstream queries.
+* **With NexusProxy Singleflight**: **1** single origin fetch dispatched; **99 requests coalesced** into the identical promise (**collapsed 99/100 concurrent requests**). All 100 clients served in **264ms** total with zero duplicate upstream queries.
 
 <p align="center">
   <img src="assets/benchmark-table.jpg" alt="Automated Benchmark Table Suite" width="90%" />
